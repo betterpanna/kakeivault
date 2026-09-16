@@ -1,0 +1,66 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Build outputs
+dist/
+.next/
+out/
+build/
+*.egg-info/
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+htmlcov/
+.coverage
+
+# Expo / React Native
+.expo/
+android/
+ios/
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+*.orig.*
+web-build/
+
+# Turbo
+.turbo/
+
+# Environment files — never commit secrets
+.env
+.env.local
+.env.*.local
+.env.development
+.env.production
+.env.test
+
+# OS
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Editors
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Docker volumes
+infrastructure/volumes/
+
+# Alembic generated (keep template, ignore generated)
+# (We DO commit migrations, so this is empty intentionally)
+
+# Logs
+*.log
+logs/
+
+# Uploads (never commit user data)
+uploads/
+tmp/

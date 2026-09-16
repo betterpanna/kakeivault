@@ -1,0 +1,145 @@
+version: "3.9"
+
+# KakeiVault local development environment
+# All services use private networking — nothing exposed to the public internet.
+#
+# Usage:
+#   docker compose up -d          # Start all services
+#   docker compose logs -f api    # Stream API logs
+#   docker compose down -v        # Remove everything including volumes
+
+services:
+  # ------------------------------------------------------------------
+  # PostgreSQL 16
+  # ------------------------------------------------------------------
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-kakeivault}
+      POSTGRES_USER: ${POSTGRES_USER:-kakeivault}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8 --locale=ja_JP.UTF-8"
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-kakeivault}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ------------------------------------------------------------------
+  # Redis 7 — job queue and rate-limit storage
+  # ------------------------------------------------------------------
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: redis-server --requirepass ${REDIS_PASSWORD:?REDIS_PASSWORD is required} --appendonly yes
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ------------------------------------------------------------------
+  # MinIO — S3-compatible private object storage
+  # ------------------------------------------------------------------
+  minio:
+    image: minio/minio:latest
+    restart: unless-stopped
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:?MINIO_ROOT_PASSWORD is required}
+    ports:
+      - "9000:9000"   # S3 API
+      - "9001:9001"   # Web console (local only)
+    volumes:
+      - minio_data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+
+  # ------------------------------------------------------------------
+  # MinIO bucket initializer — creates the private bucket on first run
+  # ------------------------------------------------------------------
+  minio-init:
+    image: minio/mc:latest
+    depends_on:
+      minio:
+        condition: service_healthy
+    restart: "no"
+    entrypoint: >
+      /bin/sh -c "
+        mc alias set local http://minio:9000 ${MINIO_ROOT_USER:-minioadmin} ${MINIO_ROOT_PASSWORD};
+        mc mb --ignore-existing local/${STORAGE_BUCKET_NAME:-kakeivault};
+        mc anonymous set none local/${STORAGE_BUCKET_NAME:-kakeivault};
+        echo 'MinIO bucket initialized';
+      "
+
+  # ------------------------------------------------------------------
+  # FastAPI — development mode with hot reload
+  # ------------------------------------------------------------------
+  api:
+    build:
+      context: ./apps/api
+      dockerfile: Dockerfile.dev
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-kakeivault}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-kakeivault}
+      REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379/0
+      STORAGE_ENDPOINT_URL: http://minio:9000
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./apps/api:/app
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+
+  # ------------------------------------------------------------------
+  # ARQ worker — OCR background processing
+  # ------------------------------------------------------------------
+  worker:
+    build:
+      context: ./apps/api
+      dockerfile: Dockerfile.dev
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-kakeivault}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-kakeivault}
+      REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379/0
+      STORAGE_ENDPOINT_URL: http://minio:9000
+    volumes:
+      - ./apps/api:/app
+    command: python -m arq app.workers.ocr_worker.WorkerSettings
+
+volumes:
+  postgres_data:
+  redis_data:
+  minio_data:
+
+networks:
+  default:
+    name: kakeivault_dev

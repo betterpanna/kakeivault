@@ -1,0 +1,63 @@
+{
+  "expo": {
+    "name": "KakeiVault",
+    "slug": "kakeivault",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "automatic",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#f8f9fa"
+    },
+    "assetBundlePatterns": ["**/*"],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "app.kakeivault",
+      "requireFullScreen": false,
+      "infoPlist": {
+        "NSCameraUsageDescription": "レシートをスキャンするためにカメラを使用します。",
+        "NSPhotoLibraryUsageDescription": "レシートや書類を選択するためにフォトライブラリを使用します。",
+        "NSFaceIDUsageDescription": "アプリのセキュリティのためにFace IDを使用します。"
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#f8f9fa"
+      },
+      "package": "app.kakeivault",
+      "permissions": ["CAMERA", "READ_EXTERNAL_STORAGE", "USE_BIOMETRIC", "USE_FINGERPRINT"]
+    },
+    "web": {
+      "favicon": "./assets/favicon.png",
+      "bundler": "metro"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-secure-store",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "レシートをスキャンするためにカメラを使用します。"
+        }
+      ],
+      [
+        "expo-local-authentication",
+        {
+          "faceIDPermission": "アプリのセキュリティのためにFace IDを使用します。"
+        }
+      ]
+    ],
+    "scheme": "kakeivault",
+    "extra": {
+      "router": {
+        "origin": false
+      },
+      "eas": {
+        "projectId": "REPLACE_WITH_EAS_PROJECT_ID"
+      }
+    }
+  }
+}

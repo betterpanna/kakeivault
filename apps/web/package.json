@@ -1,0 +1,41 @@
+{
+  "name": "@kakeivault/web",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf .next out"
+  },
+  "dependencies": {
+    "@kakeivault/config": "workspace:*",
+    "@kakeivault/contracts": "workspace:*",
+    "@kakeivault/domain": "workspace:*",
+    "@kakeivault/i18n": "workspace:*",
+    "@kakeivault/validation": "workspace:*",
+    "@tanstack/react-query": "^5.62.16",
+    "@tanstack/react-query-devtools": "^5.62.16",
+    "next": "^15.1.3",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "zod": "^3.24.1",
+    "next-pwa": "^5.6.0",
+    "recharts": "^2.15.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "@types/react": "^19.0.2",
+    "@types/react-dom": "^19.0.2",
+    "eslint": "^9.17.0",
+    "eslint-config-next": "^15.1.3",
+    "typescript": "^5.7.3",
+    "vitest": "^2.1.8",
+    "@testing-library/react": "^16.1.0",
+    "@testing-library/jest-dom": "^6.6.3",
+    "@vitejs/plugin-react": "^4.3.4",
+    "jsdom": "^25.0.1"
+  }
+}

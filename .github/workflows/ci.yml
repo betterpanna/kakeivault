@@ -1,0 +1,220 @@
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NODE_VERSION: '22'
+  PYTHON_VERSION: '3.12'
+  PNPM_VERSION: '9.15.4'
+
+jobs:
+  # ------------------------------------------------------------------
+  # Shared packages — TypeScript type checking + tests
+  # ------------------------------------------------------------------
+  packages:
+    name: Packages — Typecheck & Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Type check all packages
+        run: pnpm turbo run typecheck --filter='./packages/*'
+
+      - name: Run package tests (domain, i18n, validation)
+        run: pnpm turbo run test --filter='./packages/*'
+
+      - name: Format check
+        run: pnpm format:check
+
+  # ------------------------------------------------------------------
+  # Web app — typecheck + lint + build
+  # ------------------------------------------------------------------
+  web:
+    name: Web — Typecheck, Lint & Build
+    runs-on: ubuntu-latest
+    needs: packages
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Type check web
+        run: pnpm turbo run typecheck --filter='@kakeivault/web'
+
+      - name: Lint web
+        run: pnpm turbo run lint --filter='@kakeivault/web'
+
+      - name: Build web
+        run: pnpm turbo run build --filter='@kakeivault/web'
+        env:
+          NEXT_PUBLIC_API_URL: http://localhost:8000
+
+  # ------------------------------------------------------------------
+  # Mobile app — typecheck + lint
+  # (Build requires EAS — only runs on main)
+  # ------------------------------------------------------------------
+  mobile:
+    name: Mobile — Typecheck & Lint
+    runs-on: ubuntu-latest
+    needs: packages
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Type check mobile
+        run: pnpm turbo run typecheck --filter='@kakeivault/mobile'
+
+      - name: Lint mobile
+        run: pnpm turbo run lint --filter='@kakeivault/mobile'
+
+  # ------------------------------------------------------------------
+  # API — ruff lint, mypy type check, pytest
+  # ------------------------------------------------------------------
+  api:
+    name: API — Lint, Typecheck & Test
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: kakeivault_test
+          POSTGRES_USER: kakeivault
+          POSTGRES_PASSWORD: testpassword
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+
+      - name: Install API dependencies
+        working-directory: apps/api
+        run: pip install -e ".[dev]"
+
+      - name: Ruff lint
+        working-directory: apps/api
+        run: ruff check app tests
+
+      - name: Ruff format check
+        working-directory: apps/api
+        run: ruff format --check app tests
+
+      - name: Mypy type check
+        working-directory: apps/api
+        run: mypy app
+
+      - name: Run tests
+        working-directory: apps/api
+        env:
+          DATABASE_URL: postgresql+psycopg://kakeivault:testpassword@localhost:5432/kakeivault_test
+          REDIS_URL: redis://localhost:6379/0
+          JWT_SECRET_KEY: test-jwt-secret-key-for-ci-only-not-production-64chars
+          STORAGE_ENDPOINT_URL: http://localhost:9000
+          STORAGE_ACCESS_KEY_ID: test
+          STORAGE_SECRET_ACCESS_KEY: test
+          STORAGE_BUCKET_NAME: test
+          ENVIRONMENT: development
+          DEBUG: "false"
+          OCR_PROVIDER: stub
+          WEB_BASE_URL: http://localhost:3000
+          SMTP_HOST: localhost
+          SMTP_PORT: 1025
+        run: |
+          # Run without coverage requirement to avoid flakiness in CI
+          pytest tests/ -v --no-header -q
+
+  # ------------------------------------------------------------------
+  # Security check — dependency audit
+  # ------------------------------------------------------------------
+  security:
+    name: Security Audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Audit npm dependencies
+        run: pnpm audit --audit-level=high
+        continue-on-error: true  # Report but don't block — address in dedicated PRs
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Audit Python dependencies (pip-audit)
+        working-directory: apps/api
+        run: |
+          pip install pip-audit
+          pip-audit -r <(pip install -e . --dry-run 2>&1 | grep "^Would install" || true) || true
+        continue-on-error: true

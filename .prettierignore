@@ -1,0 +1,11 @@
+node_modules
+.next
+dist
+out
+build
+*.egg-info
+__pycache__
+.expo
+android
+ios
+.turbo
