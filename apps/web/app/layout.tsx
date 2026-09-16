@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from 'next'
-import type { ReactNode } from 'react'
+import type { JSX, ReactNode } from 'react'
 import './globals.css'
 import { Providers } from '@/components/providers'
 
@@ -28,7 +28,7 @@ export const viewport: Viewport = {
   width: 'device-width',
 }
 
-export default function RootLayout({ children }: { children: ReactNode }) {
+export default function RootLayout({ children }: { children: ReactNode }): JSX.Element {
   return (
     <html lang="ja" suppressHydrationWarning>
       <body>

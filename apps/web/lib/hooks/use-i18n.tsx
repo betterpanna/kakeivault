@@ -13,7 +13,15 @@
 
 import { createTranslator, type TranslationKey } from '@kakeivault/i18n'
 import { type SupportedLocale } from '@kakeivault/config'
-import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react'
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useState,
+  type JSX,
+  type ReactNode,
+} from 'react'
 
 interface I18nContextValue {
   locale: SupportedLocale
@@ -34,7 +42,7 @@ function detectInitialLocale(): SupportedLocale {
   return 'en'
 }
 
-export function I18nProvider({ children }: { children: ReactNode }) {
+export function I18nProvider({ children }: { children: ReactNode }): JSX.Element {
   const [locale, setLocaleState] = useState<SupportedLocale>('ja-JP')
 
   useEffect(() => {

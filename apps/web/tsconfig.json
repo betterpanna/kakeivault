@@ -7,12 +7,23 @@
     "moduleResolution": "Bundler",
     "jsx": "preserve",
     "incremental": true,
-    "plugins": [{ "name": "next" }],
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ],
     "paths": {
       "@/*": ["./app/*"],
       "@/components/*": ["./components/*"],
       "@/lib/*": ["./lib/*"]
-    }
+    },
+    // Next.js applications are never published as TypeScript libraries.
+    // Overriding these avoids "inferred type cannot be named" errors that
+    // arise when declaration emit is enabled on JSX-returning functions.
+    "declaration": false,
+    "declarationMap": false,
+    "allowJs": true,
+    "noEmit": true
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
   "exclude": ["node_modules"]

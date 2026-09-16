@@ -92,21 +92,23 @@ export const apiClient = {
   post: <T>(path: string, body?: unknown, options?: RequestInit) =>
     request<T>(path, {
       method: 'POST',
-      body: body ? JSON.stringify(body) : undefined,
+      // Conditionally spread body to satisfy exactOptionalPropertyTypes:
+      // RequestInit.body is BodyInit | null — never undefined.
+      ...(body !== undefined ? { body: JSON.stringify(body) } : {}),
       ...options,
     }),
 
   patch: <T>(path: string, body?: unknown, options?: RequestInit) =>
     request<T>(path, {
       method: 'PATCH',
-      body: body ? JSON.stringify(body) : undefined,
+      ...(body !== undefined ? { body: JSON.stringify(body) } : {}),
       ...options,
     }),
 
   put: <T>(path: string, body?: unknown, options?: RequestInit) =>
     request<T>(path, {
       method: 'PUT',
-      body: body ? JSON.stringify(body) : undefined,
+      ...(body !== undefined ? { body: JSON.stringify(body) } : {}),
       ...options,
     }),
 

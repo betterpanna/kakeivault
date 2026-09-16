@@ -1,8 +1,9 @@
 import type { Metadata } from 'next'
+import type { JSX } from 'react'
 
 export const metadata: Metadata = { title: 'ログイン / Login' }
 
-export default function LoginPage() {
+export default function LoginPage(): JSX.Element {
   return (
     <main className="auth-page">
       {/* LoginForm is a Phase 1 client component */}

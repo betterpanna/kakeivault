@@ -43,12 +43,7 @@ const nextConfig: NextConfig = {
     '@kakeivault/validation',
   ],
 
-  // Never expose secrets to the client
-  env: {
-    // Only safe public values — no secrets
-  },
-  publicRuntimeConfig: {},
-  serverRuntimeConfig: {},
+  // Never expose secrets to the client via env — use NEXT_PUBLIC_ prefix for safe public values only.
 }
 
 export default nextConfig
