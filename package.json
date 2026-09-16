@@ -2,6 +2,7 @@
   "name": "kakeivault",
   "private": true,
   "version": "0.1.0",
+  "type": "module",
   "description": "KakeiVault – Privacy-first personal finance and document management",
   "scripts": {
     "build": "turbo run build",
