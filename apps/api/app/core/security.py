@@ -16,14 +16,14 @@ import secrets
 from datetime import UTC, datetime, timedelta
 from typing import Any
 
+import bcrypt
 from jose import JWTError, jwt
-from passlib.context import CryptContext
 
 from app.core.config import get_settings
 
 settings = get_settings()
 
-_pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto", bcrypt__rounds=12)
+_BCRYPT_ROUNDS = 12
 
 
 # ---------------------------------------------------------------------------
@@ -31,11 +31,24 @@ _pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto", bcrypt__round
 # ---------------------------------------------------------------------------
 
 def hash_password(plain: str) -> str:
-    return _pwd_context.hash(plain)
+    """Hash a password with bcrypt (work factor 12).
+
+    bcrypt has a hard limit of 72 bytes; passwords longer than that are
+    explicitly truncated before hashing so the schema is consistent across
+    all callers.  The schema validator already caps passwords at 128 chars,
+    so in practice this truncation path is never hit in production.
+    """
+    encoded = plain.encode("utf-8")[:72]
+    return bcrypt.hashpw(encoded, bcrypt.gensalt(rounds=_BCRYPT_ROUNDS)).decode("utf-8")
 
 
 def verify_password(plain: str, hashed: str) -> bool:
-    return _pwd_context.verify(plain, hashed)
+    """Constant-time password comparison. Returns False on any error."""
+    try:
+        encoded = plain.encode("utf-8")[:72]
+        return bcrypt.checkpw(encoded, hashed.encode("utf-8"))
+    except Exception:  # noqa: BLE001
+        return False
 
 
 # ---------------------------------------------------------------------------

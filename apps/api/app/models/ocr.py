@@ -13,7 +13,7 @@ from __future__ import annotations
 
 import uuid
 
-from sqlalchemy import Enum, ForeignKey, Index, String, Text
+from sqlalchemy import Enum, ForeignKey, Index, JSON, String, Text
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -62,10 +62,14 @@ class OcrJob(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     error_message: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     # Immutable raw OCR output (set once by worker, never overwritten)
-    extracted_data: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
+    extracted_data: Mapped[dict | None] = mapped_column(
+        JSON().with_variant(JSONB(), "postgresql"), nullable=True
+    )
 
     # User corrections (set by PATCH /review, never overwritten by OCR)
-    user_review_data: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
+    user_review_data: Mapped[dict | None] = mapped_column(
+        JSON().with_variant(JSONB(), "postgresql"), nullable=True
+    )
 
     user: Mapped[User] = relationship("User", back_populates="ocr_jobs")  # type: ignore[name-defined]  # noqa: F821
     result: Mapped[OcrResult | None] = relationship(
@@ -94,7 +98,7 @@ class OcrResult(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     )  # NOT logged, privacy-sensitive
     confidence_overall: Mapped[float | None] = mapped_column(nullable=True)
     provider_response: Mapped[dict | None] = mapped_column(
-        JSONB, nullable=True
+        JSON().with_variant(JSONB(), "postgresql"), nullable=True
     )  # full provider JSON, NOT logged
 
     job: Mapped[OcrJob] = relationship("OcrJob", back_populates="result")

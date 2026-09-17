@@ -33,6 +33,17 @@ export const en = {
   'auth.passwordRequiresDigit': 'Password must contain a digit',
   'auth.invalidCredentials': 'Incorrect email address or password',
   'auth.rateLimited': 'Too many attempts. Please try again later.',
+  'auth.confirmPassword': 'Confirm password',
+  'auth.passwordsDoNotMatch': 'Passwords do not match',
+  'auth.registerSuccess': 'Account created. Please check your email to verify your address.',
+  'auth.alreadyHaveAccount': 'Already have an account?',
+  'auth.noAccount': "Don't have an account?",
+  'auth.duplicateEmail': 'An account with this email already exists',
+  'auth.welcomeBack': 'Welcome back',
+  'auth.createAccountTitle': 'Create account',
+  'auth.signInToContinue': 'Sign in to KakeiVault',
+  'auth.loggingIn': 'Signing in...',
+  'auth.registering': 'Creating account...',
 
   // Dashboard
   'dashboard.title': 'Dashboard',

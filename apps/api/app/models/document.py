@@ -11,6 +11,7 @@ from sqlalchemy import (
     ForeignKey,
     Index,
     Integer,
+    JSON,
     String,
     Text,
 )
@@ -50,7 +51,11 @@ class Document(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     )
     document_date: Mapped[str | None] = mapped_column(String(10), nullable=True)  # YYYY-MM-DD
     notes: Mapped[str | None] = mapped_column(Text, nullable=True)
-    tags: Mapped[list[str]] = mapped_column(ARRAY(String(100)), default=list, nullable=False)
+    tags: Mapped[list[str]] = mapped_column(
+        JSON().with_variant(ARRAY(String(100)), "postgresql"),
+        default=list,
+        nullable=False,
+    )
 
     # Storage
     storage_key: Mapped[str] = mapped_column(String(1000), nullable=False)

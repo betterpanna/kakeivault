@@ -7,6 +7,25 @@ Ownership and authorization tests run against real async routes.
 
 from __future__ import annotations
 
+# ---------------------------------------------------------------------------
+# Set required environment variables BEFORE any app imports.
+# In CI these are injected via the workflow env block; locally they fall back
+# to safe dummy values so the tests can run without a real .env file.
+# ---------------------------------------------------------------------------
+import os
+
+os.environ.setdefault("DATABASE_URL", "sqlite+aiosqlite:///:memory:")
+os.environ.setdefault(
+    "JWT_SECRET_KEY",
+    "test-secret-key-for-local-dev-only-do-not-use-in-production-xxxxxxxx",
+)
+os.environ.setdefault("STORAGE_ENDPOINT_URL", "http://localhost:9000")
+os.environ.setdefault("STORAGE_ACCESS_KEY_ID", "minioadmin")
+os.environ.setdefault("STORAGE_SECRET_ACCESS_KEY", "minioadmin")
+os.environ.setdefault("REDIS_URL", "redis://localhost:6379/0")
+os.environ.setdefault("ENVIRONMENT", "development")
+os.environ.setdefault("COOKIE_SECURE", "false")
+
 import asyncio
 from collections.abc import AsyncGenerator
 from typing import Any

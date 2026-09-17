@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import uuid
 
-from sqlalchemy import BigInteger, ForeignKey, Index, String, UniqueConstraint
+from sqlalchemy import BigInteger, ForeignKey, Index, JSON, String, UniqueConstraint
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -26,7 +26,11 @@ class Budget(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     month: Mapped[str] = mapped_column(String(7), nullable=False)  # YYYY-MM
     overall_minor_units: Mapped[int] = mapped_column(BigInteger, nullable=False, default=0)
     # category → minor units  {"food": 50000, ...}
-    category_budgets: Mapped[dict] = mapped_column(JSONB, nullable=False, default=dict)
+    category_budgets: Mapped[dict] = mapped_column(
+        JSON().with_variant(JSONB(), "postgresql"),
+        nullable=False,
+        default=dict,
+    )
 
     user: Mapped[User] = relationship("User", back_populates="budgets")  # type: ignore[name-defined]  # noqa: F821
 

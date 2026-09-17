@@ -34,6 +34,17 @@ export const jaJP = {
   'auth.passwordRequiresDigit': 'パスワードには数字を含めてください',
   'auth.invalidCredentials': 'メールアドレスまたはパスワードが正しくありません',
   'auth.rateLimited': 'しばらく経ってから再試行してください',
+  'auth.confirmPassword': 'パスワード（確認）',
+  'auth.passwordsDoNotMatch': 'パスワードが一致しません',
+  'auth.registerSuccess': 'アカウントを作成しました。確認メールをご確認ください。',
+  'auth.alreadyHaveAccount': 'すでにアカウントをお持ちの方は',
+  'auth.noAccount': 'アカウントをお持ちでない方は',
+  'auth.duplicateEmail': 'このメールアドレスはすでに使用されています',
+  'auth.welcomeBack': 'おかえりなさい',
+  'auth.createAccountTitle': 'アカウント作成',
+  'auth.signInToContinue': 'KakeiVaultにログインしてください',
+  'auth.loggingIn': 'ログイン中...',
+  'auth.registering': '登録中...',
 
   // Dashboard
   'dashboard.title': 'ダッシュボード',

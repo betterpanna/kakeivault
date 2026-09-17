@@ -6,9 +6,20 @@
  * - Never puts access tokens in localStorage
  * - Automatically refreshes tokens on 401
  * - Includes CSRF protection via custom header
+ *
+ * Architecture note — same-origin proxy
+ * --------------------------------------
+ * All /api/* requests are rewritten server-side by Next.js to the FastAPI
+ * backend (see next.config.ts rewrites).  This keeps cookies same-origin
+ * (SameSite=Lax works) and avoids any CORS preflight.  The raw backend URL
+ * is therefore NOT needed in the browser bundle — we always use relative
+ * paths (/api/...) here.
  */
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000'
+// Always use a relative base so requests go through the Next.js proxy in
+// both development and production.  Next.js rewrites /api/* to the FastAPI
+// backend via the rewrites() configuration in next.config.ts.
+const API_BASE = ''
 
 class ApiError extends Error {
   constructor(
